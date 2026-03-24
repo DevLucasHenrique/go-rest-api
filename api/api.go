@@ -6,15 +6,34 @@ import (
 )
 
 type CoinBalanceParams struct {
-	Username string
+	Username string `schema:"username"`
 }
 
 type CoinBalanceResponse struct {
-	StatusCode int
-	Balance int64
+	StatusCode int   `json:"statusCode"`
+	Balance    int64 `json:"balance"`
 }
 
 type Error struct {
-	StatusCode int
-	Message string 
+	StatusCode int    `json:"statusCode"`
+	Message    string `json:"message"`
 }
+
+func writeError(w http.ResponseWriter, message string, code int) {
+	resp := Error{
+		StatusCode: code,
+		Message:    message,
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	_ = json.NewEncoder(w).Encode(resp)
+}
+
+var (
+	RequestErrorHandler = func(w http.ResponseWriter, err error) {
+		writeError(w, err.Error(), http.StatusBadRequest)
+	}
+	InternalErrorHandler = func(w http.ResponseWriter) {
+		writeError(w, "An unexpected error occurred.", http.StatusInternalServerError)
+	}
+)
